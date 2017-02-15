@@ -1,8 +1,8 @@
 {
   "name": "multisigwallet",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Multisig Wallet",
-  "main": "index.js",
+  "main": "dist/multisigwallet.js",
   "scripts": {
     "test": "mocha --compilers js:babel-core/register",
     "build": "rm -rf dist/* && babel-node js/compile.js && babel js/multisigwallet.js -o dist/multisigwallet.js"
