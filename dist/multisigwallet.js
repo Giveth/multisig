@@ -111,6 +111,80 @@ var MultiSigWallet = function () {
         value: function submitTransaction(opts, cb) {
             return (0, _runethtx.sendContractTx)(this.web3, this.contract, "submitTransaction", opts, cb);
         }
+    }, {
+        key: "confirmTransaction",
+        value: function confirmTransaction(opts, cb) {
+            return (0, _runethtx.sendContractTx)(this.web3, this.contract, "confirmTransaction", opts, cb);
+        }
+    }, {
+        key: "revokeConfirmation",
+        value: function revokeConfirmation(opts, cb) {
+            return (0, _runethtx.sendContractTx)(this.web3, this.contract, "revokeConfirmation", opts, cb);
+        }
+    }, {
+        key: "addActionOptions",
+        value: function addActionOptions(actionOptions, dest, value, data, _cb) {
+            var _this2 = this;
+
+            return (0, _runethtx.asyncfunc)(function (cb) {
+                var accounts = void 0;
+                var st = void 0;
+                _async2.default.series([function (cb1) {
+                    _this2.web3.eth.getAccounts(function (err, _accounts) {
+                        if (err) {
+                            cb1(err);
+                            return;
+                        }
+                        accounts = _accounts;
+                        cb1();
+                    });
+                }, function (cb1) {
+                    _this2.getState(function (err, _st) {
+                        if (err) {
+                            cb1(err);
+                            return;
+                        }
+                        st = _st;
+                        cb1();
+                    });
+                }, function (cb1) {
+                    _lodash2.default.each(_lodash2.default.intersection(accounts, st.owners), function (account) {
+                        actionOptions.push({
+                            type: "MULTISIG_START",
+                            multisig: _this2.contract.address,
+                            account: account
+                        });
+                    });
+                    _lodash2.default.each(st.transactions, function (transaction) {
+                        if (transaction.executed === false && transaction.destination === dest && transaction.data === data) {
+                            actionOptions.push({
+                                type: "MULTISIG_INFO",
+                                multisig: _this2.contract.address,
+                                confirmations: transaction.confirmations
+                            });
+                        }
+                        _lodash2.default.each(_lodash2.default.intersection(accounts, st.owners), function (account) {
+                            if (transaction.confirmations.indexOf(account) >= 0) {
+                                actionOptions.push({
+                                    type: "MULTISIG_REVOKE",
+                                    account: account,
+                                    multisig: _this2.contract.address,
+                                    transaction: transaction
+                                });
+                            } else {
+                                actionOptions.push({
+                                    type: "MULTISIG_CONFIRM",
+                                    account: account,
+                                    multisig: _this2.contract.address,
+                                    transaction: transaction
+                                });
+                            }
+                        });
+                    });
+                    cb1();
+                }], cb);
+            }, _cb);
+        }
     }], [{
         key: "deploy",
         value: function deploy(web3, opts, _cb) {

@@ -44,5 +44,29 @@ function deployExample(_cb) {
                     cb1();
                 });
         },
+        (cb1) => {
+            multiSigWallet.submitTransaction({
+                from: eth.accounts[ 0 ],
+                destination: multiSigWallet.contract.address,
+                value: 0,
+                data: multiSigWallet.contract.addOwner.getData(eth.accounts[ 3 ]),
+            }, cb1);
+        },
+        (cb1) => {
+            const actionOptions = [];
+            multiSigWallet.addActionOptions(
+                actionOptions,
+                multiSigWallet.contract.address,
+                0,
+                multiSigWallet.contract.addOwner.getData(eth.accounts[ 3 ]),
+                () => {
+                    console.log(JSON.stringify(actionOptions, null, 2));
+                    cb1();
+                });
+        },
     ], cb);
 }
+
+deployExample(() => {
+    process.exit();
+});

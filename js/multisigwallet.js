@@ -102,4 +102,90 @@ export default class MultiSigWallet {
             opts,
             cb);
     }
+
+    confirmTransaction(opts, cb) {
+        return sendContractTx(
+            this.web3,
+            this.contract,
+            "confirmTransaction",
+            opts,
+            cb);
+    }
+
+    revokeConfirmation(opts, cb) {
+        return sendContractTx(
+            this.web3,
+            this.contract,
+            "revokeConfirmation",
+            opts,
+            cb);
+    }
+
+    addActionOptions(actionOptions, dest, value, data, _cb) {
+        return asyncfunc((cb) => {
+            let accounts;
+            let st;
+            async.series([
+                (cb1) => {
+                    this.web3.eth.getAccounts((err, _accounts) => {
+                        if (err) {
+                            cb1(err);
+                            return;
+                        }
+                        accounts = _accounts;
+                        cb1();
+                    });
+                },
+                (cb1) => {
+                    this.getState((err, _st) => {
+                        if (err) {
+                            cb1(err);
+                            return;
+                        }
+                        st = _st;
+                        cb1();
+                    });
+                },
+                (cb1) => {
+                    _.each(_.intersection(accounts, st.owners), (account) => {
+                        actionOptions.push({
+                            type: "MULTISIG_START",
+                            multisig: this.contract.address,
+                            account,
+                        });
+                    });
+                    _.each(st.transactions, (transaction) => {
+                        if ((transaction.executed === false) &&
+                            (transaction.destination === dest) &&
+                            (transaction.data === data)) {
+                            actionOptions.push({
+                                type: "MULTISIG_INFO",
+                                multisig: this.contract.address,
+                                confirmations: transaction.confirmations,
+                            });
+                        }
+                        _.each(_.intersection(accounts, st.owners), (account) => {
+                            if (transaction.confirmations.indexOf(account) >= 0) {
+                                actionOptions.push({
+                                    type: "MULTISIG_REVOKE",
+                                    account,
+                                    multisig: this.contract.address,
+                                    transaction,
+                                });
+                            } else {
+                                actionOptions.push({
+                                    type: "MULTISIG_CONFIRM",
+                                    account,
+                                    multisig: this.contract.address,
+                                    transaction,
+                                });
+                            }
+                        });
+                    });
+                    cb1();
+                },
+            ], cb);
+        }, _cb);
+    }
+
 }
