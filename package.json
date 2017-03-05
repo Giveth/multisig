@@ -1,6 +1,6 @@
 {
   "name": "multisigwallet",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Multisig Wallet",
   "main": "dist/multisigwallet.js",
   "scripts": {
